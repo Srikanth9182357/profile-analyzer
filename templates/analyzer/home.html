@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Analyzer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #6EE7B7, #3B82F6);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            max-width: 400px;
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+        .card h2 {
+            font-weight: bold;
+            color: #2563EB;
+        }
+        .form-control {
+            border-radius: 10px;
+        }
+        .btn-primary {
+            background-color: #2563EB;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            transition: background 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #1E40AF;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card p-4">
+    <h2>🔍 GitHub Analyzer</h2>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'analyze_github' %}">
+        {% csrf_token %}
+        <div class="mb-3 text-start">
+            <label for="username" class="form-label">Enter GitHub Username</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="e.g. torvalds">
+        </div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Analyze 🚀</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

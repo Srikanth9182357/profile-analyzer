@@ -1,0 +1,292 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Analysis Result</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f8cdda, #fbc2eb);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.6s ease-in-out;
+        }
+
+        .container {
+            background-color: #fff;
+            max-width: 720px;
+            margin: auto;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        .profile {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .profile img {
+            border-radius: 50%;
+            border: 4px solid #eee;
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            margin-bottom: 10px;
+            animation: popIn 0.5s ease-in;
+        }
+
+        .repo-list {
+            margin-top: 20px;
+        }
+
+        .repo-card {
+            background-color: #fdfdfd;
+            margin-bottom: 12px;
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            animation: fadeInUp 0.4s ease-in-out;
+        }
+
+        .repo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .repo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .repo-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .repo-header .toggle-icon {
+            font-size: 1.4rem;
+        }
+
+        .repo-details {
+            display: none;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #555;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 16px;
+            margin-top: 15px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        hr {
+            margin: 30px 0;
+            border: none;
+            border-top: 1px solid #ddd;
+        }
+
+        .insights-card {
+            background-color: #e9f7ef;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+            margin-top: 20px;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .insights-card h2 {
+            margin-top: 0;
+            color: #28a745;
+        }
+
+        .insights-section {
+            margin-top: 10px;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <h2>📊 GitHub Analysis Result</h2>
+    <div class="container">
+
+        <!-- User Profile -->
+        <div class="profile">
+            <h3>User Profile</h3>
+            <img src="{{ profile.avatar_url }}" alt="Avatar"><br>
+            <strong>Name:</strong> {{ profile.name }}<br>
+            <strong>Username:</strong> {{ profile.login }}<br>
+            <strong>Followers:</strong> {{ profile.followers }} |
+            <strong>Following:</strong> {{ profile.following }}<br>
+            <strong>Public Repos:</strong> {{ total_repos }}<br>
+            <a href="{{ profile.html_url }}" target="_blank">🔗 Visit GitHub Profile</a>
+        </div>
+
+        <hr>
+
+        <!-- Repo Stats -->
+        <h3>Repo Stats</h3>
+        <p><strong>Total Stars:</strong> {{ total_stars }}</p>
+        <p><strong>Total Forks:</strong> {{ total_forks }}</p>
+
+        <!-- Repositories -->
+        <h3>Repositories</h3>
+        <div class="repo-list">
+            {% for repo in repos %}
+                <div class="repo-card">
+                    <div class="repo-header" onclick="toggleRepoDetails('{{ repo.name }}')">
+                        <h4><a href="{{ repo.html_url }}" target="_blank">{{ repo.name }}</a></h4>
+                        <span class="toggle-icon" id="icon-{{ repo.name }}">➕</span>
+                    </div>
+                    <div class="repo-details" id="details-{{ repo.name }}">
+                        <p>{{ repo.description|default:"No description available" }}</p>
+                        <p><strong>Language:</strong> {{ repo.language }}</p>
+                        <p><strong>⭐ Stars:</strong> {{ repo.stargazers_count }} |
+                            <strong>🍴 Forks:</strong> {{ repo.forks_count }} |
+                            <strong>👀 Watchers:</strong> {{ repo.watchers }} |
+                            <strong>🐞 Issues:</strong> {{ repo.open_issues }}</p>
+                        <p><strong>📅 Updated:</strong> {{ repo.updated_at|date:"M d, Y" }}</p>
+                        <p><strong>📜 License:</strong> {{ repo.license }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <p>No repositories found</p>
+            {% endfor %}
+        </div>
+
+        <!-- Languages -->
+        <h3>Languages Used</h3>
+        <ul>
+            {% for lang, count in languages.items %}
+                <li>{{ lang }} : {{ count }}</li>
+            {% empty %}
+                <li>No languages detected</li>
+            {% endfor %}
+        </ul>
+
+        <hr>
+
+        <!-- Chart -->
+        <h3>🍰 Top Languages</h3>
+        <div style="width:250px; height:250px; margin:auto;">
+            <canvas id="languagesChart"></canvas>
+        </div>
+
+        <!-- Buttons -->
+        <br>
+        <form action="{% url 'export_pdf' %}" method="get" style="display:inline;">
+            <button type="submit" class="btn">📥 Download PDF Report</button>
+        </form>
+        <form action="{% url 'home' %}" method="get" style="display:inline;">
+            <button type="submit" class="btn">⬅ Back</button>
+        </form>
+    </div>
+
+    <!-- Chart Script -->
+    <script>
+        const langLabels = JSON.parse('{{ lang_labels|escapejs }}');
+        const langData = JSON.parse('{{ lang_counts|escapejs }}');
+        const topLangs = langLabels.slice(0, 5);
+        const topCounts = langData.slice(0, 5);
+
+        new Chart(document.getElementById('languagesChart'), {
+            type: 'pie',
+            data: {
+                labels: topLangs,
+                datasets: [{
+                    label: 'Top Languages',
+                    data: topCounts,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56',
+                        '#4BC0C0', '#9966FF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        function toggleRepoDetails(repoName) {
+            const details = document.getElementById("details-" + repoName);
+            const icon = document.getElementById("icon-" + repoName);
+            if (details.style.display === "block") {
+                details.style.display = "none";
+                icon.textContent = "➕";
+            } else {
+                details.style.display = "block";
+                icon.textContent = "➖";
+            }
+        }
+    </script>
+</body>
+</html>
